@@ -1,0 +1,11 @@
+{
+  "name": "pulso-minero",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Pulso Minero: noticias mineras de Chile y el mundo traducidas a lenguaje simple",
+  "type": "module",
+  "dependencies": {
+    "@vercel/blob": "^2.9.0",
+    "rss-parser": "^3.13.0"
+  }
+}

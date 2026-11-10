@@ -7,8 +7,16 @@ const clean = (v, max) => String(v ?? '').replace(/\s+/g, ' ').trim().slice(0, m
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Usa POST' });
-  const allowed = process.env.ALLOWED_ORIGIN;
-  if (allowed && req.headers.origin && req.headers.origin !== allowed) return res.status(403).json({ error: 'Origen no permitido' });
+  // Se aceptan pedidos de la propia página (mismo dominio) y de los dominios listados en ALLOWED_ORIGIN
+  // (separados por coma). Así un error de tipeo en la variable no bloquea el botón.
+  const origin = String(req.headers.origin || '');
+  if (origin) {
+    const host = (() => { try { return new URL(origin).host.toLowerCase(); } catch { return ''; } })();
+    const own = String(req.headers['x-forwarded-host'] || req.headers.host || '').toLowerCase();
+    const list = String(process.env.ALLOWED_ORIGIN || '').split(',').map(o => o.trim().replace(/\/+$/, '').toLowerCase()).filter(Boolean);
+    const ok = host === own || !list.length || list.includes(origin.replace(/\/+$/, '').toLowerCase());
+    if (!ok) return res.status(403).json({ error: 'Origen no permitido (' + host + ')' });
+  }
 
   const body = typeof req.body === 'string' ? safeJson(req.body) : (req.body || {});
   const title = clean(body.title, 300), summary = clean(body.summary, 2500), link = clean(body.link, 500);
